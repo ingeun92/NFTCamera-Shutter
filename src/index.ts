@@ -10,21 +10,37 @@ app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 
 const secret =
-  "0x68790c34823096aab2466a1c1c6b33b63780262b58d7ed36bf7be4646b661384";
-const address = "0x29bd6132dDc81e4cF42F213084EF4406dF77a667";
+  "63dfc6c59b0cbefcde541a5199732e4ae485266e683a1716cd778e8ed737d6f3";
+const address = "0x6C021FD5220d5f835715A3c8ff27f2cD7748e9f1";
 
-function signTransaction(from: any, to: any, secret: any, data: any) {
+function createPayloadNFTContract(
+  // from: any,
+  // to: any,
+  type: string,
+  contractName: string,
+  contractCreator: any,
+) {
+  const payloadObject = {
+    type: type,
+    contractName: contractName,
+    contractCreator: contractCreator,
+  };
+  return payloadObject;
+}
+
+function signTransaction(payloadObject: any, secret: any) {
   // let media_data = "/9j/4XefRXhpZgAATU0AKgAAAAgADAEAAAMAAAABEjAAAAEQAAI ...";
   // let from = "0x8E300110778B9f57dd8ABa35542c440B492428c9";
   // let to = "0x8E300110778B9f57dd8ABa35542c440B492428c9";
 
   // let secret =
   //   "676c126db7085b575f0cb986892de022c295716d8d1b4229d7e7bff45f970d87";
-  const payloadObject = {
-    from: from,
-    to: to,
-    data: data,
-  };
+  // const payloadObject = {
+  //   from: from,
+  //   to: to,
+  //   data: data,
+  // };
+
   const hashed = crypto
     .createHash("sha256")
     .update(JSON.stringify(payloadObject))
@@ -36,7 +52,7 @@ function signTransaction(from: any, to: any, secret: any, data: any) {
   signatureBuffer[0] = signatureObject.recid + 27;
   buf.copy(signatureBuffer, 1, 0, buf.length);
   const signatureHex = signatureBuffer.toString("hex");
-  return signatureHex;
+  return "0x" + signatureHex;
 }
 
 // Define a route handler for the default home page
@@ -56,9 +72,11 @@ app.get("/getMetadata/:tokenID", (req: any, res: any) => {
   res.send("Metadata");
 });
 
+// Get method to get a certain block from given parameter 'blockNumber'
 app.get("/getBlock", async (req: any, res: any) => {
   const blockNumber = req.body.blockNumber;
 
+  console.log("blocknumber: ", blockNumber);
   try {
     const body = await axios.get("http://3.39.217.2:7556/get_block", {
       params: {
@@ -94,6 +112,46 @@ app.get("/getBlock", async (req: any, res: any) => {
   //   .catch(function (err: any) {
   //     console.log("Unable to fetch -", err);
   //   });
+});
+
+// Method to deploy a NFT contract with address from contractCreator with secret
+
+app.post("/deployContract", async (req: any, res: any) => {
+  const type = req.body.type;
+  const contractName = req.body.contractName;
+  const contractCreator = req.body.contractCreator;
+  const secret = req.body.secret;
+
+  const payload = {
+    type: type,
+    contract_name: contractName,
+    contract_creator: contractCreator,
+  };
+
+  const signature = signTransaction(payload, secret);
+
+  console.log("payload: ", payload);
+  console.log("signature: ", signature);
+
+  try {
+    const body = await axios.post("http://3.39.217.2:7556/send", {
+      payload: payload,
+      signature: signature,
+    });
+
+    if (body.data.error) {
+      return res.status(400).json({
+        Error: body.data,
+      });
+    }
+
+    console.log(body.data);
+
+    res.send(body.data);
+  } catch (err: any) {
+    console.log("Unable to fetch -", err);
+    res.status(400);
+  }
 });
 
 app.post("/mintNFT", (req: any, res: any) => {
