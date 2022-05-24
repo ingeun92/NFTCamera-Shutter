@@ -2,6 +2,7 @@ import express from "express";
 import axios from "axios";
 import crypto from "crypto";
 import secp256k1 from "secp256k1";
+import { buffer } from "stream/consumers";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -115,7 +116,6 @@ app.get("/getBlock", async (req: any, res: any) => {
 });
 
 // Method to deploy a NFT contract with address from contractCreator with secret
-
 app.post("/deployContract", async (req: any, res: any) => {
   const type = req.body.type;
   const contractName = req.body.contractName;
@@ -129,9 +129,6 @@ app.post("/deployContract", async (req: any, res: any) => {
   };
 
   const signature = signTransaction(payload, secret);
-
-  console.log("payload: ", payload);
-  console.log("signature: ", signature);
 
   try {
     const body = await axios.post("http://3.39.217.2:7556/send", {
@@ -154,10 +151,52 @@ app.post("/deployContract", async (req: any, res: any) => {
   }
 });
 
-app.post("/mintNFT", (req: any, res: any) => {
-  const body = req.body;
-  console.log("Print: " + JSON.stringify(body));
-  res.send(body);
+// Post method to mint a nft given the contract id and data
+app.post("/mintNFT", async (req: any, res: any) => {
+  const contractId = req.body.contractId;
+  const contractCreator = req.body.contractCreator;
+  const from = req.body.from;
+  const to = req.body.to;
+  const data = Buffer.from(JSON.stringify(req.body.data));
+  const uri = req.body.uri;
+  const secret = req.body.secret;
+
+  // When converting back to JSON object
+  // const stringData = data.toString();
+  // console.log("stringToJson: ", JSON.parse(stringData));
+
+  const payload = {
+    contract_id: contractId,
+    contract_creator: contractCreator,
+    from: from,
+    to: to,
+    data: data,
+    uri: uri,
+  };
+
+  const signature = signTransaction(payload, secret);
+
+  console.log("payload: ", payload);
+
+  try {
+    const body = await axios.post("http://3.39.217.2:7556/send", {
+      payload: payload,
+      signature: signature,
+    });
+
+    if (body.data.error) {
+      return res.status(400).json({
+        Error: body.data,
+      });
+    }
+
+    console.log(body.data);
+
+    res.send(body.data);
+  } catch (err: any) {
+    console.log("Unable to fetch -", err);
+    res.status(400);
+  }
 });
 
 // Start the Express server
