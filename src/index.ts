@@ -51,6 +51,62 @@ app.get("/", (req: any, res: any) => {
   res.send("Hello world!");
 });
 
+// Get method to get a transaction given a transaction id
+app.get("/getTransaction", async (req: any, res: any) => {
+  const txid = req.body.txid;
+
+  try {
+    const body = await axios.get("http://3.39.217.2:7556/get_transaction", {
+      params: {
+        txid: txid,
+      },
+    });
+
+    console.log("Body: ", body.data);
+
+    if (body.data.error) {
+      return res.status(400).json({
+        Error: body.data,
+      });
+    }
+
+    console.log(body.data);
+
+    res.send(body.data);
+  } catch (err: any) {
+    console.log("Unable to fetch -", err);
+    res.status(400);
+  }
+});
+
+// Get method to get history for an user address
+app.get("/getHistory", async (req: any, res: any) => {
+  const address = req.body.address;
+
+  try {
+    const body = await axios.get("http://3.39.217.2:7556/get_history", {
+      params: {
+        address: address,
+      },
+    });
+
+    console.log("Body: ", body.data);
+
+    if (body.data.error) {
+      return res.status(400).json({
+        Error: body.data,
+      });
+    }
+
+    console.log(body.data);
+
+    res.send(body.data);
+  } catch (err: any) {
+    console.log("Unable to fetch -", err);
+    res.status(400);
+  }
+});
+
 // Get method to get list of TokenIDs for a user address
 app.get("/getTokenIdList", async (req: any, res: any) => {
   const contractId = req.body.contractId;
