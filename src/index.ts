@@ -1,8 +1,8 @@
+import "dotenv/config";
 import express from "express";
 import axios from "axios";
 import crypto from "crypto";
 import secp256k1 from "secp256k1";
-import { buffer } from "stream/consumers";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,34 +14,24 @@ const secret =
   "63dfc6c59b0cbefcde541a5199732e4ae485266e683a1716cd778e8ed737d6f3";
 const address = "0x6C021FD5220d5f835715A3c8ff27f2cD7748e9f1";
 
-function createPayloadNFTContract(
-  // from: any,
-  // to: any,
-  type: string,
-  contractName: string,
-  contractCreator: any,
-) {
-  const payloadObject = {
-    type: type,
-    contractName: contractName,
-    contractCreator: contractCreator,
-  };
-  return payloadObject;
-}
+// Function to create a payload, currently not in use
+// function createPayloadNFTContract(
+//   // from: any,
+//   // to: any,
+//   type: string,
+//   contractName: string,
+//   contractCreator: any,
+// ) {
+//   const payloadObject = {
+//     type: type,
+//     contractName: contractName,
+//     contractCreator: contractCreator,
+//   };
+//   return payloadObject;
+// }
 
+// Function to sign a transcation given a payload object and a secret, returns signature with '0x' prefix
 function signTransaction(payloadObject: any, secret: any) {
-  // let media_data = "/9j/4XefRXhpZgAATU0AKgAAAAgADAEAAAMAAAABEjAAAAEQAAI ...";
-  // let from = "0x8E300110778B9f57dd8ABa35542c440B492428c9";
-  // let to = "0x8E300110778B9f57dd8ABa35542c440B492428c9";
-
-  // let secret =
-  //   "676c126db7085b575f0cb986892de022c295716d8d1b4229d7e7bff45f970d87";
-  // const payloadObject = {
-  //   from: from,
-  //   to: to,
-  //   data: data,
-  // };
-
   const hashed = crypto
     .createHash("sha256")
     .update(JSON.stringify(payloadObject))
@@ -59,6 +49,39 @@ function signTransaction(payloadObject: any, secret: any) {
 // Define a route handler for the default home page
 app.get("/", (req: any, res: any) => {
   res.send("Hello world!");
+});
+
+// Get method to get list of TokenIDs for a user address
+app.get("/getTokenIdList", async (req: any, res: any) => {
+  const contractId = req.body.contractId;
+  const userAddress = req.body.userAddress;
+
+  console.log("ContractId: ", contractId);
+  console.log("Address: ", userAddress);
+
+  try {
+    const body = await axios.get("http://3.39.217.2:7556/get_token_id", {
+      params: {
+        contract_id: contractId,
+        address: userAddress,
+      },
+    });
+
+    console.log("Body: ", body.data);
+
+    if (body.data.error) {
+      return res.status(400).json({
+        Error: body.data,
+      });
+    }
+
+    console.log(body.data);
+
+    res.send(body.data);
+  } catch (err: any) {
+    console.log("Unable to fetch -", err);
+    res.status(400);
+  }
 });
 
 app.get("/getNFTList/:userAddress", (req: any, res: any) => {
@@ -98,24 +121,9 @@ app.get("/getBlock", async (req: any, res: any) => {
     console.log("Unable to fetch -", err);
     res.status(400);
   }
-
-  // axios
-  //   .get("http://3.39.217.2:7556/get_block", {
-  //     params: {
-  //       block_number: 0,
-  //     },
-  //   })
-  //   .then((response: any) => {
-  //     console.log(typeof response);
-  //     console.log(response.data);
-  //     res.send(response.data);
-  //   })
-  //   .catch(function (err: any) {
-  //     console.log("Unable to fetch -", err);
-  //   });
 });
 
-// Method to deploy a NFT contract with address from contractCreator with secret
+// Post method to deploy a NFT contract with address from contractCreator with secret
 app.post("/deployContract", async (req: any, res: any) => {
   const type = req.body.type;
   const contractName = req.body.contractName;
@@ -199,7 +207,7 @@ app.post("/mintNFT", async (req: any, res: any) => {
   }
 });
 
-// Start the Express server
+// Start the Express server, default port is 3000 if not stated in env
 app.listen(PORT, () => {
   console.log(`Server started at http://localhost:${PORT}`);
 });
