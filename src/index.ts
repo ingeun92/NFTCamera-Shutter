@@ -1,8 +1,5 @@
 import "dotenv/config";
 import express from "express";
-import axios from "axios";
-import crypto from "crypto";
-import secp256k1 from "secp256k1";
 
 import logchainRoutes from "./routes/logchain.js";
 import besuRoutes from "./routes/besu.js";

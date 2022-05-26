@@ -1,4 +1,3 @@
-import express from "express";
 import Router from "express";
 import crypto from "crypto";
 import secp256k1 from "secp256k1";
@@ -42,7 +41,7 @@ function signTransaction(payloadObject: any, secret: any) {
   return "0x" + signatureHex;
 }
 
-// Define a route handler for the default home page
+// Define a route handler for the default home page of logchain
 router.get("/", (req: any, res: any) => {
   res.send("Hello world from Logchain!");
 });
