@@ -124,8 +124,6 @@ router.post("/getTokenIds", async (req: any, res: any) => {
       stop: stop,
     });
 
-    console.log("Body: ", body.data);
-
     if (body.data.error) {
       return res.status(400).json({
         Error: body.data,
@@ -153,8 +151,6 @@ router.post("/getContractIds", async (req: any, res: any) => {
       start: start,
       stop: stop,
     });
-
-    console.log("Body: ", body.data);
 
     if (body.data.error) {
       return res.status(400).json({
@@ -268,7 +264,6 @@ router.post("/mintNFT", async (req: any, res: any) => {
 
   try {
     const signature = signTransaction(payload, secret);
-    console.log("signature/error", signature);
     const body = await axios.post("http://3.39.217.2:7556/send", {
       payload: payload,
       signature: signature,
