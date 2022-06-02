@@ -46,15 +46,13 @@ router.get("/", (req: any, res: any) => {
   res.send("Hello world from Logchain!");
 });
 
-// Get method to get a transaction given a transaction id
-router.get("/getTransaction", async (req: any, res: any) => {
+// Post method to get a transaction given a transaction id
+router.post("/getTransaction", async (req: any, res: any) => {
   const txid = req.body.txid;
 
   try {
-    const body = await axios.get("http://3.39.217.2:7556/get_transaction", {
-      params: {
-        txid: txid,
-      },
+    const body = await axios.post("http://3.39.217.2:7556/get_transaction", {
+      txid: txid,
     });
 
     console.log("Body: ", body.data);
@@ -74,48 +72,77 @@ router.get("/getTransaction", async (req: any, res: any) => {
   }
 });
 
-// Get method to get history for an user address
-router.get("/getHistory", async (req: any, res: any) => {
-  const address = req.body.address;
-
-  try {
-    const body = await axios.get("http://3.39.217.2:7556/get_history", {
-      params: {
-        address: address,
-      },
-    });
-
-    console.log("Body: ", body.data);
-
-    if (body.data.error) {
-      return res.status(400).json({
-        Error: body.data,
-      });
-    }
-
-    console.log(body.data);
-
-    res.send(body.data);
-  } catch (err: any) {
-    console.log("Unable to fetch -", err);
-    res.status(400);
-  }
-});
-
-// Get method to get list of TokenIDs for a user address
-router.get("/getTokenIdList", async (req: any, res: any) => {
-  const contractId = req.body.contractId;
+// Post method to get history for an user address
+router.post("/getHistory", async (req: any, res: any) => {
   const userAddress = req.body.userAddress;
-
-  console.log("ContractId: ", contractId);
-  console.log("Address: ", userAddress);
+  const start = req.body.start;
+  const stop = req.body.stop;
 
   try {
-    const body = await axios.get("http://3.39.217.2:7556/get_token_id", {
-      params: {
-        contract_id: contractId,
-        address: userAddress,
-      },
+    const body = await axios.post("http://3.39.217.2:7556/get_history", {
+      address: userAddress,
+      start: start,
+      stop: stop,
+    });
+
+    console.log("Body: ", body.data);
+
+    if (body.data.error) {
+      return res.status(400).json({
+        Error: body.data,
+      });
+    }
+
+    console.log(body.data);
+
+    res.send(body.data);
+  } catch (err: any) {
+    console.log("Unable to fetch -", err);
+    res.status(400);
+  }
+});
+
+// Post method to get list of TokenIDs for a user address
+router.post("/getTokenIds", async (req: any, res: any) => {
+  const userAddress = req.body.userAddress;
+  const start = req.body.start;
+  const stop = req.body.stop;
+
+  try {
+    const body = await axios.post("http://3.39.217.2:7556/get_token_id", {
+      address: userAddress,
+      start: start,
+      stop: stop,
+    });
+
+    console.log("Body: ", body.data);
+
+    if (body.data.error) {
+      return res.status(400).json({
+        Error: body.data,
+      });
+    }
+
+    console.log(body.data);
+
+    res.send(body.data);
+  } catch (err: any) {
+    console.log("Unable to fetch -", err);
+    res.status(400);
+  }
+});
+
+// Post method to get list of ContractIDs for a user address
+router.post("/getContractIds", async (req: any, res: any) => {
+  const userAddress = req.body.userAddress;
+  const start = req.body.start;
+  const stop = req.body.stop;
+
+  try {
+    const body = await axios.post("http://3.39.217.2:7556/get_contract_id", {
+      address: userAddress,
+      start: start,
+      stop: stop,
     });
 
     console.log("Body: ", body.data);
@@ -147,16 +174,16 @@ router.get("/getMetadata/:tokenID", (req: any, res: any) => {
   res.send("Metadata");
 });
 
-// Get method to get a certain block from given parameter 'blockNumber'
-router.get("/getBlock", async (req: any, res: any) => {
+// Post method to get a certain block from given parameter 'blockNumber'
+router.post("/getBlock", async (req: any, res: any) => {
   const blockNumber = req.body.blockNumber;
+  const includeTransactions = req.body.includeTransactions;
 
   console.log("blocknumber: ", blockNumber);
   try {
-    const body = await axios.get("http://3.39.217.2:7556/get_block", {
-      params: {
-        block_number: blockNumber,
-      },
+    const body = await axios.post("http://3.39.217.2:7556/get_block", {
+      block_number: blockNumber,
+      include_transactions: includeTransactions,
     });
 
     if (body.data.error) {
@@ -216,13 +243,9 @@ router.post("/mintNFT", async (req: any, res: any) => {
   const contractCreator = req.body.contractCreator;
   const from = req.body.from;
   const to = req.body.to;
-  const data = Buffer.from(JSON.stringify(req.body.data));
+  const data = JSON.stringify(req.body.data);
   const uri = req.body.uri;
   const secret = req.body.secret;
-
-  // When converting back to JSON object
-  // const stringData = data.toString();
-  // console.log("stringToJson: ", JSON.parse(stringData));
 
   const payload = {
     contract_id: contractId,
