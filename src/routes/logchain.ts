@@ -27,18 +27,24 @@ const address = "0x6C021FD5220d5f835715A3c8ff27f2cD7748e9f1";
 
 // Function to sign a transcation given a payload object and a secret, returns signature with '0x' prefix
 function signTransaction(payloadObject: any, secret: any) {
-  const hashed = crypto
-    .createHash("sha256")
-    .update(JSON.stringify(payloadObject))
-    .digest();
-  const privateKey = Buffer.from(secret, "hex");
-  const signatureObject = secp256k1.ecdsaSign(hashed, privateKey);
-  let buf = Buffer.from(signatureObject.signature);
-  let signatureBuffer = Buffer.alloc(65);
-  signatureBuffer[0] = signatureObject.recid + 27;
-  buf.copy(signatureBuffer, 1, 0, buf.length);
-  const signatureHex = signatureBuffer.toString("hex");
-  return "0x" + signatureHex;
+  try {
+    const hashed = crypto
+      .createHash("sha256")
+      .update(JSON.stringify(payloadObject))
+      .digest();
+
+    const privateKey = Buffer.from(secret, "hex");
+    console.log("Private Key: ", privateKey);
+    const signatureObject = secp256k1.ecdsaSign(hashed, privateKey);
+    let buf = Buffer.from(signatureObject.signature);
+    let signatureBuffer = Buffer.alloc(65);
+    signatureBuffer[0] = signatureObject.recid + 27;
+    buf.copy(signatureBuffer, 1, 0, buf.length);
+    const signatureHex = signatureBuffer.toString("hex");
+    return "0x" + signatureHex;
+  } catch (error) {
+    throw error;
+  }
 }
 
 // Define a route handler for the default home page of logchain
@@ -55,8 +61,6 @@ router.post("/getTransaction", async (req: any, res: any) => {
       txid: txid,
     });
 
-    console.log("Body: ", body.data);
-
     if (body.data.error) {
       return res.status(400).json({
         Error: body.data,
@@ -65,10 +69,15 @@ router.post("/getTransaction", async (req: any, res: any) => {
 
     console.log(body.data);
 
+    // let testing = body.data.transaction.payload.data;
+    // const parsedData = JSON.parse(testing);
+    // console.log("Data: ", testing);
+    // console.log("image URI: ", parsedData.image);
+
     res.send(body.data);
   } catch (err: any) {
-    console.log("Unable to fetch -", err);
-    res.status(400);
+    console.log("Error: ", err);
+    res.status(400).send(err.message);
   }
 });
 
@@ -97,8 +106,8 @@ router.post("/getHistory", async (req: any, res: any) => {
 
     res.send(body.data);
   } catch (err: any) {
-    console.log("Unable to fetch -", err);
-    res.status(400);
+    console.log("Error: ", err);
+    res.status(400).send(err.message);
   }
 });
 
@@ -127,8 +136,8 @@ router.post("/getTokenIds", async (req: any, res: any) => {
 
     res.send(body.data);
   } catch (err: any) {
-    console.log("Unable to fetch -", err);
-    res.status(400);
+    console.log("Error: ", err);
+    res.status(400).send(err.message);
   }
 });
 
@@ -157,8 +166,8 @@ router.post("/getContractIds", async (req: any, res: any) => {
 
     res.send(body.data);
   } catch (err: any) {
-    console.log("Unable to fetch -", err);
-    res.status(400);
+    console.log("Error: ", err);
+    res.status(400).send(err.message);
   }
 });
 
@@ -196,8 +205,8 @@ router.post("/getBlock", async (req: any, res: any) => {
 
     res.send(body.data);
   } catch (err: any) {
-    console.log("Unable to fetch -", err);
-    res.status(400);
+    console.log("Error: ", err);
+    res.status(400).send(err.message);
   }
 });
 
@@ -206,17 +215,18 @@ router.post("/deployContract", async (req: any, res: any) => {
   const type = req.body.type;
   const contractName = req.body.contractName;
   const contractCreator = req.body.contractCreator;
+  const userAddress = req.body.userAddress;
   const secret = req.body.secret;
 
   const payload = {
     type: type,
     contract_name: contractName,
     contract_creator: contractCreator,
+    address: userAddress,
   };
 
-  const signature = signTransaction(payload, secret);
-
   try {
+    const signature = signTransaction(payload, secret);
     const body = await axios.post("http://3.39.217.2:7556/send", {
       payload: payload,
       signature: signature,
@@ -232,35 +242,33 @@ router.post("/deployContract", async (req: any, res: any) => {
 
     res.send(body.data);
   } catch (err: any) {
-    console.log("Unable to fetch -", err);
-    res.status(400);
+    console.log("Error: ", err);
+    res.status(400).send(err.message);
   }
 });
 
 // Post method to mint a nft given the contract id and data
 router.post("/mintNFT", async (req: any, res: any) => {
   const contractId = req.body.contractId;
-  const contractCreator = req.body.contractCreator;
   const from = req.body.from;
   const to = req.body.to;
-  const data = JSON.stringify(req.body.data);
+  const data = req.body.data;
   const uri = req.body.uri;
   const secret = req.body.secret;
 
   const payload = {
     contract_id: contractId,
-    contract_creator: contractCreator,
     from: from,
     to: to,
     data: data,
     uri: uri,
   };
 
-  const signature = signTransaction(payload, secret);
-
-  console.log("payload: ", payload);
+  //   console.log("payload: ", payload);
 
   try {
+    const signature = signTransaction(payload, secret);
+    console.log("signature/error", signature);
     const body = await axios.post("http://3.39.217.2:7556/send", {
       payload: payload,
       signature: signature,
@@ -276,8 +284,8 @@ router.post("/mintNFT", async (req: any, res: any) => {
 
     res.send(body.data);
   } catch (err: any) {
-    console.log("Unable to fetch -", err);
-    res.status(400);
+    console.log("Error: ", err);
+    res.status(400).send(err.message);
   }
 });
 
