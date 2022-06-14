@@ -6,7 +6,6 @@ import { ethers } from "ethers";
 import bsquareAbi from "./../contracts/BsquareAbi.json" assert { type: "json" };
 import bsquareBytecode from "./../contracts/BsquareBytecode.json" assert { type: "json" };
 import "dotenv/config";
-import e from "express";
 
 const router = Router();
 
@@ -64,9 +63,6 @@ router.post("/deployContract", async (req: any, res: any) => {
 
 // Post method to mint a nft
 router.post("/mintNFT", async (req: any, res: any) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "X-Requested-With");
-
   const metadata = req.body.metadata;
   const userPk = req.body.userPk;
   const uri = req.body.uri;
