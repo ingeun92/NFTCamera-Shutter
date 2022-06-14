@@ -6,6 +6,7 @@ import { ethers } from "ethers";
 import bsquareAbi from "./../contracts/BsquareAbi.json" assert { type: "json" };
 import bsquareBytecode from "./../contracts/BsquareBytecode.json" assert { type: "json" };
 import "dotenv/config";
+import e from "express";
 
 const router = Router();
 
@@ -20,43 +21,10 @@ router.get("/", async (req: any, res: any) => {
   res.send("Hello world from Besu!");
 });
 
-// Post method to mint a nft
-router.post("/mintNFT", async (req: any, res: any) => {
-  const contractAddress = req.body.contractAddress;
-  const userPk = req.body.userPk;
-  const uri = req.body.uri;
-
-  try {
-    const userWallet = new ethers.Wallet(userPk, provider);
-    const userContract = new ethers.Contract(
-      contractAddress,
-      bsquareAbi,
-      userWallet,
-    );
-
-    let result = await userContract.safeMint(userWallet.address, uri);
-
-    res.send(result);
-  } catch (error) {
-    res.send(error);
-  }
-});
-
-// Get method to get the tokenURI
-router.get("/getTokenURI", async (req: any, res: any) => {
-  const contractAddress = req.body.contractAddress;
-  const tokenId = req.body.tokenId;
-
-  try {
-    const contract = new ethers.Contract(contractAddress, bsquareAbi, provider);
-
-    let uri = await contract.tokenURI(tokenId);
-
-    res.send(uri);
-  } catch (error) {
-    res.send(error);
-  }
-});
+// router.post("/createMetadata", async (req: any, res: any) => {
+//   const imageLink = req.body.imageLink;
+//   const info = req.body.info;
+// });
 
 // Deploys a contract with given contract name and symbol
 router.post("/deployContract", async (req: any, res: any) => {
@@ -78,6 +46,52 @@ router.post("/deployContract", async (req: any, res: any) => {
     );
 
     res.send(contract.address);
+  } catch (error) {
+    res.send(error);
+  }
+});
+
+// Post method to mint a nft
+router.post("/mintNFT", async (req: any, res: any) => {
+  const metadata = req.body.metadata;
+  const userPk = req.body.userPk;
+  const uri = req.body.uri;
+  const contractAddress = req.body.contractAddress;
+
+  console.log(metadata);
+
+  try {
+    const userWallet = new ethers.Wallet(userPk, provider);
+    const userContract = new ethers.Contract(
+      contractAddress,
+      bsquareAbi,
+      userWallet,
+    );
+
+    // if (userContract.deployed()) {
+    let result = await userContract.safeMint(userWallet.address, uri);
+
+    res.send(result);
+    // } else {
+    //   console.log("Contract has not been deployed");
+    //   res.send("Contract has not been deployed");
+    // }
+  } catch (error) {
+    res.send(error);
+  }
+});
+
+// Get method to get the tokenURI
+router.get("/getTokenURI", async (req: any, res: any) => {
+  const contractAddress = req.body.contractAddress;
+  const tokenId = req.body.tokenId;
+
+  try {
+    const contract = new ethers.Contract(contractAddress, bsquareAbi, provider);
+
+    let uri = await contract.tokenURI(tokenId);
+
+    res.send(uri);
   } catch (error) {
     res.send(error);
   }
