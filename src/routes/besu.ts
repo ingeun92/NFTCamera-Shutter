@@ -71,7 +71,6 @@ async function createMetadata(name: string, contractName: string, data: any) {
   const metadataUri =
     baseUri + (await uploadToS3(name, contractName, metadata));
 
-  console.log("Metadata uri in createMetadata: ", metadataUri);
   return metadataUri;
 }
 
@@ -112,8 +111,6 @@ router.post("/mintNFT", async (req: any, res: any) => {
   const userPk = req.body.userPk;
   const contractAddress = req.body.contractAddress;
 
-  console.log(data);
-
   try {
     const userWallet = new ethers.Wallet(userPk, provider);
     const userContract = new ethers.Contract(
@@ -122,7 +119,11 @@ router.post("/mintNFT", async (req: any, res: any) => {
       userWallet,
     );
 
-    const metadataUri = await createMetadata(name, userContract.name, data);
+    const metadataUri = await createMetadata(
+      name,
+      await userContract.name(),
+      data,
+    );
     console.log("Metadata URI: ", metadataUri);
 
     if (userContract.deployed()) {
