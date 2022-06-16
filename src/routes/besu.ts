@@ -3,38 +3,84 @@ import axios from "axios";
 import crypto from "crypto";
 import secp256k1 from "secp256k1";
 import { ethers } from "ethers";
+import aws from "aws-sdk";
+
 import bsquareAbi from "./../contracts/BsquareAbi.json" assert { type: "json" };
 import bsquareBytecode from "./../contracts/BsquareBytecode.json" assert { type: "json" };
 import "dotenv/config";
 
 const router = Router();
 
-const pk = process.env.PRIVATE_KEY;
+const aws3AccessKeyId = process.env.AWS3_ACCESS_KEY_ID;
+const aws3SecretAccessKey = process.env.AWS3_SECRET_ACCESS_KEY;
+
+const baseUri = "https://nftcamera.s3-ap-northeast-2.amazonaws.com/";
+
+aws.config.update({
+  secretAccessKey: aws3SecretAccessKey,
+  accessKeyId: aws3AccessKeyId,
+  region: "ap-northeast-2",
+});
+
+const s3 = new aws.S3();
+
+// const pk = process.env.PRIVATE_KEY;
+const pk = process.env.RINKEBY_PRIVATE_KEY;
 const address = "0x6C021FD5220d5f835715A3c8ff27f2cD7748e9f1";
 
 const provider = new ethers.providers.JsonRpcProvider("http://3.39.16.90:8545");
 const nodeWallet = new ethers.Wallet(pk, provider);
 
-function createMetadata(contractName: string, data: any) {
-  const imageUri = data.uri;
+// Function to upload to amazon s3
+async function uploadToS3(
+  filename: string,
+  contractName: string,
+  metadata: object,
+) {
+  const buf = Buffer.from(JSON.stringify(metadata));
 
-  const metadata = {
-    name: "name",
-    image: imageUri,
+  const data = {
+    Bucket: "nftcamera",
+    Key: contractName + "/" + filename + ".json",
+    Body: buf,
+    ContentEncoding: "base64",
+    ContentType: "application/json",
+    ACL: "public-read",
   };
 
-  return metadata;
+  console.log("Data: ", data);
+
+  s3.upload(data, (err: any, data: any) => {
+    if (err) {
+      console.log(err);
+      console.log("Error uploading data: ", data);
+    } else {
+      console.log("Succesfully uploaded!");
+    }
+  });
+  return data.Key;
+}
+
+// Function to create metadata
+async function createMetadata(name: string, contractName: string, data: any) {
+  console.log("Enter createMetaData");
+  const metadata = {
+    name: name,
+    image: data.uri,
+    data: data,
+  };
+
+  const metadataUri =
+    baseUri + (await uploadToS3(name, contractName, metadata));
+
+  console.log("Metadata uri in createMetadata: ", metadataUri);
+  return metadataUri;
 }
 
 // Define a route handler for the default home page of besu
 router.get("/", async (req: any, res: any) => {
   res.send("Hello world from Besu!");
 });
-
-// router.post("/createMetadata", async (req: any, res: any) => {
-//   const imageLink = req.body.imageLink;
-//   const info = req.body.info;
-// });
 
 // Deploys a contract with given contract name and symbol
 router.post("/deployContract", async (req: any, res: any) => {
@@ -63,12 +109,12 @@ router.post("/deployContract", async (req: any, res: any) => {
 
 // Post method to mint a nft
 router.post("/mintNFT", async (req: any, res: any) => {
-  const metadata = req.body.metadata;
+  const name = req.body.name;
+  const data = req.body.data;
   const userPk = req.body.userPk;
-  const uri = req.body.uri;
   const contractAddress = req.body.contractAddress;
 
-  console.log(metadata);
+  console.log(data);
 
   try {
     const userWallet = new ethers.Wallet(userPk, provider);
@@ -78,22 +124,23 @@ router.post("/mintNFT", async (req: any, res: any) => {
       userWallet,
     );
 
-    // const metadataObject = createMetadata(userContract.name, metadata);
+    const metadataUri = await createMetadata(name, "userContract.name", data);
+    console.log("Metadata URI: ", metadataUri);
 
-    // if (userContract.deployed()) {
-    let result = await userContract.safeMint(userWallet.address, uri);
+    if (userContract.deployed()) {
+      let result = await userContract.safeMint(userWallet.address, metadataUri);
 
-    res.send(result);
-    // } else {
-    //   console.log("Contract has not been deployed");
-    //   res.send("Contract has not been deployed");
-    // }
+      res.send(result);
+    } else {
+      console.log("Contract has not been deployed");
+      res.send("Contract has not been deployed");
+    }
   } catch (error) {
     res.send(error);
   }
 });
 
-// Get method to get the tokenURI
+// // Get method to get the tokenURI
 router.get("/getTokenURI", async (req: any, res: any) => {
   const contractAddress = req.body.contractAddress;
   const tokenId = req.body.tokenId;
@@ -109,7 +156,7 @@ router.get("/getTokenURI", async (req: any, res: any) => {
   }
 });
 
-// Gets a contract name from contract address
+// // Gets a contract name from contract address
 router.get("/getContractName", async (req: any, res: any) => {
   const contractAddress = req.body.contractAddress;
 
