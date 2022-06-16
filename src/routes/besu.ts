@@ -122,7 +122,7 @@ router.post("/mintNFT", async (req: any, res: any) => {
       userWallet,
     );
 
-    const metadataUri = await createMetadata(name, "userContract.name", data);
+    const metadataUri = await createMetadata(name, userContract.name, data);
     console.log("Metadata URI: ", metadataUri);
 
     if (userContract.deployed()) {
