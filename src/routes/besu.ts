@@ -24,9 +24,10 @@ aws.config.update({
 
 const s3 = new aws.S3();
 
+const blockchainAddress = process.env.BLOCKCHAIN_ADDRESS;
 const pk = process.env.PRIVATE_KEY;
 
-const provider = new ethers.providers.JsonRpcProvider("http://3.39.16.90:8545");
+const provider = new ethers.providers.JsonRpcProvider(blockchainAddress);
 // const provider = new ethers.providers.JsonRpcProvider("HTTP://127.0.0.1:8545");
 const nodeWallet = new ethers.Wallet(pk, provider);
 
