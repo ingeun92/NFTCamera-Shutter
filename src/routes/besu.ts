@@ -147,9 +147,23 @@ router.get("/getTokenURI", async (req: any, res: any) => {
   try {
     const contract = new ethers.Contract(contractAddress, bsquareAbi, provider);
 
-    let uri = await contract.tokenURI(tokenId);
+    const uri = await contract.tokenURI(tokenId);
 
     res.send(uri);
+  } catch (error) {
+    res.send(error);
+  }
+});
+
+router.get("/getTokenCounter", async (req: any, res: any) => {
+  const contractAddress = req.body.contractAddress;
+
+  try {
+    const contract = new ethers.Contract(contractAddress, bsquareAbi, provider);
+
+    const counter = await contract._tokenIdCounter();
+
+    res.send(counter);
   } catch (error) {
     res.send(error);
   }
@@ -163,7 +177,7 @@ router.get("/getContractName", async (req: any, res: any) => {
     const bsquareContract = new ethers.Contract(
       contractAddress,
       bsquareAbi,
-      nodeWallet,
+      provider,
     );
 
     const name = await bsquareContract.name();
