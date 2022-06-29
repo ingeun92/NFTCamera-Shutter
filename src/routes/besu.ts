@@ -137,7 +137,7 @@ router.post("/mintNFT", async (req: any, res: any) => {
   }
 });
 
-// // Get method to get the tokenURI
+// Get method to get the tokenURI
 router.get("/getTokenURI", async (req: any, res: any) => {
   const contractAddress = req.body.contractAddress;
   const tokenId = req.body.tokenId;
@@ -153,6 +153,7 @@ router.get("/getTokenURI", async (req: any, res: any) => {
   }
 });
 
+// Gets tokenCounter from contract address
 router.get("/getTokenCounter", async (req: any, res: any) => {
   const contractAddress = req.body.contractAddress;
 
@@ -167,7 +168,7 @@ router.get("/getTokenCounter", async (req: any, res: any) => {
   }
 });
 
-// // Gets a contract name from contract address
+// Gets a contract name from contract address
 router.get("/getContractName", async (req: any, res: any) => {
   const contractAddress = req.body.contractAddress;
 
