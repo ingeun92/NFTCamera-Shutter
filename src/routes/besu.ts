@@ -25,8 +25,6 @@ aws.config.update({
 const s3 = new aws.S3();
 
 const pk = process.env.PRIVATE_KEY;
-// const pk = "1b867ffe3bea49abb24971e4ba1a2bd5fdd204fafbc160b372154fe2e0d55f6f";
-const address = "0x6C021FD5220d5f835715A3c8ff27f2cD7748e9f1";
 
 const provider = new ethers.providers.JsonRpcProvider("http://3.39.16.90:8545");
 // const provider = new ethers.providers.JsonRpcProvider("HTTP://127.0.0.1:8545");
