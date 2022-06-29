@@ -163,7 +163,7 @@ router.get("/getTokenCounter", async (req: any, res: any) => {
 
     const counter = await contract._tokenIdCounter();
 
-    res.send(counter);
+    res.send(counter.toString());
   } catch (error) {
     res.send(error);
   }
