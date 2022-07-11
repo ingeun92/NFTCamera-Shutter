@@ -62,15 +62,17 @@ async function uploadToS3(
 // Function to create metadata
 async function createMetadata(
   name: string,
+  description: string,
+  attributes: Array<object>,
   contractName: string,
   data: any,
   verification: any,
 ) {
   const metadata = {
     name: name,
-    description: "",
+    description: description,
     image: data.uri,
-    attributes: [{}],
+    attributes: attributes,
     exif: data.exif,
     verification: verification,
   };
@@ -113,7 +115,10 @@ router.post("/deployContract", async (req: any, res: any) => {
 
 // Post method to mint a nft
 router.post("/mintNFT", async (req: any, res: any) => {
+  console.log(req.body);
   const name = req.body.name;
+  const description = req.body.description;
+  const attributes = req.body.attributes;
   const data = req.body.data;
   const verification = req.body.verification;
   const userPk = req.body.userPk;
@@ -129,6 +134,8 @@ router.post("/mintNFT", async (req: any, res: any) => {
 
     const metadataUri = await createMetadata(
       name,
+      description,
+      attributes,
       await userContract.name(),
       data,
       verification,
