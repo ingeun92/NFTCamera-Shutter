@@ -36,7 +36,7 @@ async function uploadToS3(
   filename: string,
   contractName: string,
   metadata: object,
-) {
+): Promise<string> {
   const buf = Buffer.from(JSON.stringify(metadata));
 
   const data = {
@@ -200,6 +200,19 @@ router.get("/getContractName", async (req: any, res: any) => {
     const name = await bsquareContract.name();
 
     res.send(name);
+  } catch (error) {
+    res.send(error);
+  }
+});
+
+//Gets Balance from address
+router.get("/getBalance", async (req: any, res: any) => {
+  const address = req.body.address;
+
+  try {
+    const balance = await provider.getBalance(address);
+
+    res.send(ethers.utils.formatEther(balance));
   } catch (error) {
     res.send(error);
   }
