@@ -4,6 +4,7 @@ import crypto from "crypto";
 import secp256k1 from "secp256k1";
 import { ethers } from "ethers";
 import aws from "aws-sdk";
+import { Request, Response } from "express";
 
 import bsquareAbi from "./../contracts/BsquareAbi.json" assert { type: "json" };
 import bsquareBytecode from "./../contracts/BsquareBytecode.json" assert { type: "json" };
@@ -48,10 +49,11 @@ async function uploadToS3(
     ACL: "public-read",
   };
 
-  s3.upload(data, (err: any, data: any) => {
+  s3.upload(data, (err: Error, callbackData: {}) => {
+    console.log("callbackData: ", callbackData);
     if (err) {
       console.log(err);
-      console.log("Error uploading data: ", data);
+      console.log("Error uploading data: ", callbackData);
     } else {
       console.log("Succesfully uploaded!");
     }
@@ -63,10 +65,15 @@ async function uploadToS3(
 async function createMetadata(
   name: string,
   description: string,
-  attributes: Array<object>,
+  attributes: Array<{ trait_type: string; value: string }>,
   contractName: string,
-  data: any,
-  verification: any,
+  data: { uri: string; exif: string },
+  verification: {
+    service: string;
+    hash: string;
+    uuid: string;
+    signature: string;
+  },
 ) {
   const metadata = {
     name: name,
@@ -84,12 +91,12 @@ async function createMetadata(
 }
 
 // Define a route handler for the default home page of besu
-router.get("/", async (req: any, res: any) => {
+router.get("/", async (req: Request, res: Response) => {
   res.send("Hello world from Besu!");
 });
 
 // Deploys a contract with given contract name and symbol
-router.post("/deployContract", async (req: any, res: any) => {
+router.post("/deployContract", async (req: Request, res: Response) => {
   const contractName = req.body.contractName;
   const contractSymbol = req.body.contractSymbol;
   const userAddress = req.body.userAddress;
@@ -114,7 +121,7 @@ router.post("/deployContract", async (req: any, res: any) => {
 });
 
 // Post method to mint a nft
-router.post("/mintNFT", async (req: any, res: any) => {
+router.post("/mintNFT", async (req: Request, res: Response) => {
   console.log(req.body);
   const name = req.body.name;
   const description = req.body.description;
@@ -156,7 +163,7 @@ router.post("/mintNFT", async (req: any, res: any) => {
 });
 
 // Get method to get the tokenURI
-router.get("/getTokenURI", async (req: any, res: any) => {
+router.get("/getTokenURI", async (req: Request, res: Response) => {
   const contractAddress = req.body.contractAddress;
   const tokenId = req.body.tokenId;
 
@@ -172,7 +179,7 @@ router.get("/getTokenURI", async (req: any, res: any) => {
 });
 
 // Gets tokenCounter from contract address
-router.get("/getTokenCounter", async (req: any, res: any) => {
+router.get("/getTokenCounter", async (req: Request, res: Response) => {
   const contractAddress = req.body.contractAddress;
 
   try {
@@ -187,7 +194,7 @@ router.get("/getTokenCounter", async (req: any, res: any) => {
 });
 
 // Gets a contract name from contract address
-router.get("/getContractName", async (req: any, res: any) => {
+router.get("/getContractName", async (req: Request, res: Response) => {
   const contractAddress = req.body.contractAddress;
 
   try {
@@ -205,14 +212,14 @@ router.get("/getContractName", async (req: any, res: any) => {
   }
 });
 
-//Gets Balance from address
-router.get("/getBalance", async (req: any, res: any) => {
+// Gets Balance from address
+router.get("/getBalance", async (req: Request, res: Response) => {
   const address = req.body.address;
 
   try {
     const balance = await provider.getBalance(address);
 
-    res.send(ethers.utils.formatEther(balance));
+    res.send(ethers.utils.formatEther(balance) + " BSL");
   } catch (error) {
     res.send(error);
   }
